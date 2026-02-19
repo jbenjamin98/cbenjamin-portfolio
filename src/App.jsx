@@ -145,8 +145,8 @@ const Card = ({ children, className = "", stripeScale = 1, disableStripePadding 
 
 const FloatingNav = () => {
   const [activeSection, setActiveSection] = useState('hero');
-  const [bottomOffset, setBottomOffset] = useState(32);
   const navRef = useRef(null);
+  const containerRef = useRef(null);
   const [pillStyle, setPillStyle] = useState({ left: 0, width: 0, top: 0, height: 0, opacity: 0 });
   const isMobile = useIsMobile();
 
@@ -179,14 +179,11 @@ const FloatingNav = () => {
             }
           }
 
-          if (footerTop !== null) {
+          if (footerTop !== null && containerRef.current) {
             const footerRectTop = footerTop - window.scrollY;
             const windowHeight = window.innerHeight;
-            if (footerRectTop < windowHeight) {
-              setBottomOffset(32 + (windowHeight - footerRectTop));
-            } else {
-              setBottomOffset(32);
-            }
+            const visibleFooter = Math.max(0, windowHeight - footerRectTop);
+            containerRef.current.style.bottom = `calc(32px + max(env(safe-area-inset-bottom), ${visibleFooter}px))`;
           }
           ticking = false;
         });
@@ -233,7 +230,7 @@ const FloatingNav = () => {
   const activeItem = NAV_ITEMS.find(item => item.id === activeSection);
 
   return (
-    <div className="fixed inset-x-0 z-40 flex justify-center pointer-events-none" style={{ bottom: `${bottomOffset}px` }}>
+    <div ref={containerRef} className="fixed inset-x-0 z-40 flex justify-center pointer-events-none" style={{ bottom: 'calc(32px + env(safe-area-inset-bottom))' }}>
       <nav ref={navRef} className={`pointer-events-auto relative flex items-center gap-1 p-2 rounded-full border-2 border-[#222337] bg-[#ffffe5]/90 ${isMobile ? '' : 'backdrop-blur-md'} shadow-[4px_4px_0px_0px_#222337] overflow-x-auto max-w-[90vw]`}>
         <motion.div
           className="absolute rounded-full"
@@ -293,7 +290,7 @@ const App = () => {
       <style>
         {`
           @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
-          
+
           .text-shadow-hero {
             text-shadow: 3px 3px 0px #ef4b2f;
           }
@@ -358,7 +355,7 @@ const App = () => {
       </style>
       <Header scaleX={scaleX} />
       <FloatingNav />
-      <main className="pt-24 relative z-10">
+      <main className="pt-[calc(6rem+env(safe-area-inset-top))] relative z-10">
         <Hero />
         <About />
         <Education />
@@ -397,7 +394,7 @@ const Header = ({ scaleX }) => {
   ];
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 ${isMobile ? '' : 'backdrop-blur-md'} border-b-2 shadow-[0_4px_0_0_rgba(34,35,55,0.05)] transition-colors duration-300 bg-[#ffffe5]/90 border-[#222337]/10 overflow-hidden`}>
+    <header className={`fixed top-0 left-0 right-0 z-50 ${isMobile ? '' : 'backdrop-blur-md'} border-b-2 shadow-[0_4px_0_0_rgba(34,35,55,0.05)] transition-colors duration-300 bg-[#ffffe5]/90 border-[#222337]/10 overflow-hidden pt-[env(safe-area-inset-top)]`}>
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
         <svg width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
           {stripes.map((stripe, index) => (
