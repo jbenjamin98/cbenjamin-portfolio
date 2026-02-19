@@ -1,0 +1,127 @@
+{
+  "personal_information": {
+    "name": "Christian Benjamin",
+    "title": "CompSci Student @ UVA",
+    "location": "Marshall, Virginia",
+    "email": "christian.c.benjamin04@gmail.com",
+    "phone": "540-486-6160",
+    "linkedin": "https://www.linkedin.com/in/christian-benjamin-603331261/",
+    "github": "https://github.com/LacksalCB",
+    "summary": "Computer Science & Linguistics Researcher & Ph.D. Applicant specializing in Systems Engineering and Compiler Design. Combines rigorous academic research in low-level architecture with technical expertise in C/C++, x86 Assembly, OCaml, and Python. Specialized in developing efficient computing systems, ranging from custom kernels and bootloaders to full-stack applications supporting 400+ users. Demonstrated leadership in both academic and industrial environments, supporting 600+ students as a Teaching Assistant and leading fabrication teams for high-profile clients including Disney and Princeton University."
+  },
+  "education": {
+    "institution": "University of Virginia",
+    "degree": "BA in Computer Science and Linguistics",
+    "location": "Charlottesville, VA",
+    "graduation_date": "Expected Graduation: May 2026",
+    "related_coursework": [
+      "Data Structures and Algorithms",
+      "Software Engineering",
+      "Computer Systems and Organization",
+      "Parallel Computing",
+      "Programming Languages",
+      "Discrete Mathematics",
+      "Linguistic Theory and Analysis",
+      "Syntax and Semantics",
+      "Historical Linguistics",
+      "Old Church Slavonic"
+    ]
+  },
+  "skills": {
+    "programming_languages": [
+      "C/C++",
+      "Java",
+      "Python",
+      "HTML",
+      "JavaScript",
+      "CSS",
+      "SQL",
+      "LaTeX",
+      "x86",
+      "OCaml",
+      "Prolog"
+    ],
+    "libraries": [
+      "Django",
+      "GTK",
+      "OpenGL",
+      "JavaFX",
+      "Tkinter",
+      "JGraphT",
+      "CUDA"
+    ],
+    "utilities": [
+      "Git/GitHub",
+      "VSCode",
+      "Vim",
+      "Command Line",
+      "Linux/Unix",
+      "Gradle",
+      "Makefile/CMake",
+      "AWS",
+      "Heroku",
+      "Docker"
+    ]
+  },
+  "projects": [
+    {
+      "title": "Full-Stack Library Web-App",
+      "technologies": "Python, AWS, Heroku",
+      "dates": "Jan. 2025 – May 2025",
+      "details": [
+        "Developed a Django-based library management system, securely supporting 300+ users and 10,000+ books via a PostgreSQL database, with Google OAuth user authentication and Amazon S3 media management",
+        "Implemented borrowing and access-control workflows with custom permissions and automated notifications, improving user-engagement and system reliability"
+      ]
+    },
+    {
+      "title": "Domain-Specific Graphics Language",
+      "technologies": "C, ASM",
+      "dates": "Sept. 2022 - Present",
+      "details": [
+        "Designed a custom programming language syntactically optimized for graphics processing emphasizing clarity, modularity, and component-based structure; Integrates procedural and functional programming paradigms",
+        "Developing a tailored compiler to translate source code to optimized Linux x86 assembly, supporting user-defined types, event processing, and state-driven components"
+      ]
+    },
+    {
+      "title": "Bootloader/Kernel",
+      "technologies": "C, ASM, Qemu, Makefile",
+      "dates": "Aug. 2023 - Present",
+      "details": [
+        "Developed a custom 16-bit x86 bootloader that initializes CPU registers, stack, and modifies video-buffer to display output on bare-metal hardware",
+        "Implementing a minimal C kernel enabling basic system functionality post-boot including a terminal emulator for system control"
+      ]
+    },
+    {
+      "title": "Course Review Application",
+      "technologies": "JavaFX, JDBC, JUnit",
+      "dates": "Aug. 2024 – May 2025",
+      "details": [
+        "Developed a full-stack course review application with a JavaFX/FXML frontend, supporting 400+ users and 1000+ courses through an SQL database via JDBC linkage",
+        "Developed 50+ unit and integration tests using JUnit/Mockito, implementing test-driven design principles and achieving 90% code coverage"
+      ]
+    }
+  ],
+  "work_experience": [
+    {
+      "role": "Computer Science Teaching Assistant",
+      "company": "UVA",
+      "location": "Charlottesville, VA",
+      "dates": "Aug 2025 – Present",
+      "details": [
+        "Teaching Assistant for Computer Systems and Organization 2 (CSO2) and Software Engineering (SwE), supporting 600+ students during office hours and lab sections",
+        "Provided hands-on instruction on systems development, C programming, and software engineering principles",
+        "Mentored and two 5-person SwE student teams, overseeing Agile development of a full-stack web application with 300+ end users"
+      ]
+    },
+    {
+      "role": "Blacksmith",
+      "company": "Cardine Studios",
+      "location": "Bealeton, VA",
+      "dates": "Jul 2023 – Aug 2025",
+      "details": [
+        "Constructed architectural metalwork pieces for 30+ clients including Princeton, Disney, and the Washington National Cathedral",
+        "Mentored and led team of 5+ intern blacksmiths to complete 50+ projects involving machining, fabrication, and installation of bespoke ornate products"
+      ]
+    }
+  ]
+}
