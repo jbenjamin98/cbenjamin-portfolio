@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import { motion, useScroll, useTransform, useSpring, useInView } from 'framer-motion';
 import { Linkedin, Mail, Flag, Phone, Github } from 'lucide-react';
 
 import VisitorCounter from './components/VisitorCounter';
@@ -62,6 +62,41 @@ const SpinningCoin = ({ className = "" }) => (
   </div>
 );
 
+const TypingHeading = ({ text, className }) => {
+  const [visibleCount, setVisibleCount] = useState(0);
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true, margin: "-50px" });
+
+  useEffect(() => {
+    if (isInView) {
+      const interval = setInterval(() => {
+        setVisibleCount((prev) => {
+          if (prev >= text.length) {
+            clearInterval(interval);
+            return prev;
+          }
+          return prev + 1;
+        });
+      }, 100);
+      return () => clearInterval(interval);
+    }
+  }, [isInView, text]);
+
+  return (
+    <h2 ref={ref} className={className} aria-label={text}>
+      <span aria-hidden="true">{text.slice(0, visibleCount)}</span>
+      <motion.span
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0, 1, 0] }}
+        transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }}
+        className="inline-block w-3 h-[1em] bg-[#ef4b2f] ml-1 align-middle"
+        aria-hidden="true"
+      />
+      <span aria-hidden="true" className="opacity-0">{text.slice(visibleCount)}</span>
+    </h2>
+  );
+};
+
 const Card = ({ children, className = "", stripeScale = 1, disableStripePadding = false, ...props }) => {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({
@@ -79,26 +114,25 @@ const Card = ({ children, className = "", stripeScale = 1, disableStripePadding 
   return (
     <motion.div
       ref={ref}
-      className={`relative bg-[#ff9a14]/10 border-2 border-[#ff9a14] rounded-xl p-6 shadow-[4px_4px_0px_0px_#ff9a14] hover:shadow-[8px_8px_0px_0px_#ff9a14] transition-shadow duration-300 overflow-hidden ${className}`}
+      className={`relative bg-[#ff9a14]/10 border-2 border-[#ff9a14] rounded-xl p-6 shadow-[4px_4px_0px_0px_#ff9a14] md:hover:shadow-[8px_8px_0px_0px_#ff9a14] transition-shadow duration-300 overflow-hidden ${className}`}
       {...props}
     >
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-80">
         <svg width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <motion.g style={{ y: stripesY, scale: stripeScale, originX: 0, originY: 0 }}>
+          <motion.g style={{ y: stripesY, scale: stripeScale, originX: 0, originY: 0, willChange: "transform" }}>
             {stripes.map((stripe, index) => (
               <path key={index} d={stripe.d} stroke={stripe.color} strokeWidth={strokeWidth} strokeLinejoin="round" />
             ))}
             {stripes.map((stripe, index) => (
-              <motion.path
+              <path
                 key={`anim-${index}`}
                 d={stripe.d}
                 stroke="white"
                 strokeWidth={strokeWidth}
                 strokeLinejoin="round"
                 strokeDasharray="100 100"
-                initial={{ strokeDashoffset: 0, opacity: 0.1 }}
-                animate={{ strokeDashoffset: -200 }}
-                transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+                className="opacity-10 animate-dash-scroll"
+                style={{ willChange: "stroke-dashoffset" }}
               />
             ))}
           </motion.g>
@@ -114,16 +148,22 @@ const FloatingNav = () => {
   const [bottomOffset, setBottomOffset] = useState(32);
   const navRef = useRef(null);
   const [pillStyle, setPillStyle] = useState({ left: 0, width: 0, top: 0, height: 0, opacity: 0 });
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     let ticking = false;
-    let sectionElements = [];
-    let footer = null;
+    let sectionPositions = [];
+    let footerTop = null;
 
     const cacheElements = () => {
       const sections = ['hero', 'about', 'education', 'projects', 'experience', 'skills'];
-      sectionElements = sections.map(id => ({ id, el: document.getElementById(id) })).filter(item => item.el);
-      footer = document.getElementById('contact');
+      sectionPositions = sections.map(id => {
+        const el = document.getElementById(id);
+        if (!el) return null;
+        return { id, top: el.offsetTop, bottom: el.offsetTop + el.offsetHeight };
+      }).filter(Boolean);
+      const footerEl = document.getElementById('contact');
+      if (footerEl) footerTop = footerEl.offsetTop;
     };
 
     cacheElements();
@@ -133,19 +173,17 @@ const FloatingNav = () => {
         window.requestAnimationFrame(() => {
           const scrollPosition = window.scrollY + 300;
 
-          for (const { id, el } of sectionElements) {
-            const offsetTop = el.offsetTop;
-            const offsetBottom = offsetTop + el.offsetHeight;
-            if (scrollPosition >= offsetTop && scrollPosition < offsetBottom) {
+          for (const { id, top, bottom } of sectionPositions) {
+            if (scrollPosition >= top && scrollPosition < bottom) {
               setActiveSection(id);
             }
           }
 
-          if (footer) {
-            const footerRect = footer.getBoundingClientRect();
+          if (footerTop !== null) {
+            const footerRectTop = footerTop - window.scrollY;
             const windowHeight = window.innerHeight;
-            if (footerRect.top < windowHeight) {
-              setBottomOffset(32 + (windowHeight - footerRect.top));
+            if (footerRectTop < windowHeight) {
+              setBottomOffset(32 + (windowHeight - footerRectTop));
             } else {
               setBottomOffset(32);
             }
@@ -196,7 +234,7 @@ const FloatingNav = () => {
 
   return (
     <div className="fixed inset-x-0 z-40 flex justify-center pointer-events-none" style={{ bottom: `${bottomOffset}px` }}>
-      <nav ref={navRef} className="pointer-events-auto relative flex items-center gap-1 p-2 rounded-full border-2 border-[#222337] bg-[#ffffe5]/90 backdrop-blur-md shadow-[4px_4px_0px_0px_#222337] overflow-x-auto max-w-[90vw]">
+      <nav ref={navRef} className={`pointer-events-auto relative flex items-center gap-1 p-2 rounded-full border-2 border-[#222337] bg-[#ffffe5]/90 ${isMobile ? '' : 'backdrop-blur-md'} shadow-[4px_4px_0px_0px_#222337] overflow-x-auto max-w-[90vw]`}>
         <motion.div
           className="absolute rounded-full"
           initial={false}
@@ -234,20 +272,23 @@ const App = () => {
     damping: 30,
     restDelta: 0.001
   });
+  const isMobile = useIsMobile();
 
   return (
-    <div className="font-['Space_Mono'] transition-colors duration-300 text-[#222337]">
+    <div className="font-['Space_Mono'] transition-colors duration-300 text-[#222337] overflow-x-hidden">
       <div className="fixed inset-0 z-[-2] bg-[#ffffe5]" />
       
       {/* Noise Overlay */}
-      <div className="fixed inset-0 z-[0] pointer-events-none opacity-[0.04] mix-blend-overlay">
-        <svg width="100%" height="100%">
-          <filter id="noise">
-            <feTurbulence type="fractalNoise" baseFrequency="0.80" numOctaves="4" stitchTiles="stitch" />
-          </filter>
-          <rect width="100%" height="100%" filter="url(#noise)" />
-        </svg>
-      </div>
+      {!isMobile && (
+        <div className="fixed inset-0 z-[0] pointer-events-none opacity-[0.04] mix-blend-overlay">
+          <svg width="100%" height="100%">
+            <filter id="noise">
+              <feTurbulence type="fractalNoise" baseFrequency="0.80" numOctaves="4" stitchTiles="stitch" />
+            </filter>
+            <rect width="100%" height="100%" filter="url(#noise)" />
+          </svg>
+        </div>
+      )}
 
       <style>
         {`
@@ -306,6 +347,13 @@ const App = () => {
           .animate-spin-y {
             animation: spin-y 5s linear infinite;
           }
+          @keyframes dash-scroll {
+            0% { stroke-dashoffset: 0; }
+            100% { stroke-dashoffset: -200; }
+          }
+          .animate-dash-scroll {
+            animation: dash-scroll 10s linear infinite;
+          }
         `}
       </style>
       <Header scaleX={scaleX} />
@@ -327,6 +375,7 @@ const Header = ({ scaleX }) => {
   const dashOffset = useTransform(scaleX, [0, 1], [0, -1000]);
   const nameRef = useRef(null);
   const [nameRight, setNameRight] = useState(0);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const updatePosition = () => {
@@ -348,7 +397,7 @@ const Header = ({ scaleX }) => {
   ];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b-2 shadow-[0_4px_0_0_rgba(34,35,55,0.05)] transition-colors duration-300 bg-[#ffffe5]/90 border-[#222337]/10 overflow-hidden">
+    <header className={`fixed top-0 left-0 right-0 z-50 ${isMobile ? '' : 'backdrop-blur-md'} border-b-2 shadow-[0_4px_0_0_rgba(34,35,55,0.05)] transition-colors duration-300 bg-[#ffffe5]/90 border-[#222337]/10 overflow-hidden`}>
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
         <svg width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
           {stripes.map((stripe, index) => (
@@ -362,7 +411,7 @@ const Header = ({ scaleX }) => {
               strokeWidth="10"
               strokeLinejoin="round"
               strokeDasharray="100 100"
-              style={{ strokeDashoffset: dashOffset, opacity: 0.1 }}
+              style={{ strokeDashoffset: dashOffset, opacity: 0.1, willChange: "stroke-dashoffset" }}
             />
           ))}
         </svg>
@@ -461,7 +510,7 @@ const Hero = () => {
 const About = () => {
   return (
     <section id="about" className="container mx-auto px-6 py-32">
-      <h2 className="text-4xl font-['Orbitron'] font-bold text-center text-shadow-section">About Me</h2>
+      <TypingHeading text="About Me" className="text-4xl font-['Orbitron'] font-bold text-center text-shadow-section" />
       <div className="mt-8 max-w-3xl mx-auto">
         <Card>
           <p className="text-sm md:text-base">
@@ -479,7 +528,7 @@ const Education = () => {
 
   return (
     <section id="education" className="container mx-auto px-6 py-32 relative">
-      <h2 className="text-4xl font-['Orbitron'] font-bold text-center text-shadow-section">Education</h2>
+      <TypingHeading text="Education" className="text-4xl font-['Orbitron'] font-bold text-center text-shadow-section" />
       <div className="mt-12 flex justify-center relative">
         {education.map((edu, index) => (
           <div key={index} className="flex flex-col md:flex-row items-center gap-8 w-full max-w-5xl">
@@ -530,7 +579,7 @@ const Education = () => {
 const Projects = () => {
   return (
     <section id="projects" className="container mx-auto px-6 py-32 relative">
-      <h2 className="text-4xl font-['Orbitron'] font-bold text-center text-shadow-section">Projects</h2>
+      <TypingHeading text="Projects" className="text-4xl font-['Orbitron'] font-bold text-center text-shadow-section" />
       <div className="mt-12 grid md:grid-cols-2 gap-8 relative">
         {resumeData.projects.map((project, index) => (
           <Card
@@ -559,7 +608,7 @@ const Projects = () => {
 const Experience = () => {
   return (
     <section id="experience" className="container mx-auto px-6 py-32 relative">
-      <h2 className="text-4xl font-['Orbitron'] font-bold text-center text-shadow-section">Experience</h2>
+      <TypingHeading text="Experience" className="text-4xl font-['Orbitron'] font-bold text-center text-shadow-section" />
       <div className="mt-12 relative">
         {resumeData.work_experience.map((job, index) => (
           <Card
@@ -588,7 +637,7 @@ const Experience = () => {
 const Skills = () => {
   return (
     <section id="skills" className="container mx-auto px-6 py-32 relative">
-      <h2 className="text-4xl font-['Orbitron'] font-bold text-center text-shadow-section">Skills</h2>
+      <TypingHeading text="Skills" className="text-4xl font-['Orbitron'] font-bold text-center text-shadow-section" />
       <div className="mt-12 max-w-4xl mx-auto font-['Space_Mono'] relative">
         <Card>
           <div className="space-y-8">
