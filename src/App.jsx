@@ -97,6 +97,21 @@ const TypingHeading = ({ text, className }) => {
   );
 };
 
+const Skeleton = ({ className }) => (
+  <div className={`animate-pulse bg-[#222337]/10 rounded ${className}`} />
+);
+
+const SkeletonCard = ({ className = "" }) => (
+  <div className={`relative bg-[#ff9a14]/5 border-2 border-[#ff9a14]/20 rounded-xl p-6 overflow-hidden ${className}`}>
+    <div className="space-y-4">
+      <Skeleton className="h-8 w-3/4" />
+      <Skeleton className="h-4 w-full" />
+      <Skeleton className="h-4 w-5/6" />
+      <Skeleton className="h-4 w-4/6" />
+    </div>
+  </div>
+);
+
 const Card = ({ children, className = "", stripeScale = 1, disableStripePadding = false, ...props }) => {
   const ref = useRef(null);
   const { scrollYProgress } = useScroll({
@@ -143,12 +158,15 @@ const Card = ({ children, className = "", stripeScale = 1, disableStripePadding 
   );
 };
 
-const FloatingNav = () => {
+const FloatingNav = ({ isLoading }) => {
   const [activeSection, setActiveSection] = useState('hero');
+  const activeSectionRef = useRef('hero');
   const navRef = useRef(null);
   const containerRef = useRef(null);
   const [pillStyle, setPillStyle] = useState({ left: 0, width: 0, top: 0, height: 0, opacity: 0 });
   const isMobile = useIsMobile();
+
+  useEffect(() => { activeSectionRef.current = activeSection; }, [activeSection]);
 
   useEffect(() => {
     let ticking = false;
@@ -175,7 +193,9 @@ const FloatingNav = () => {
 
           for (const { id, top, bottom } of sectionPositions) {
             if (scrollPosition >= top && scrollPosition < bottom) {
-              setActiveSection(id);
+              if (activeSectionRef.current !== id) {
+                setActiveSection(id);
+              }
             }
           }
 
@@ -203,7 +223,7 @@ const FloatingNav = () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
     };
-  }, []);
+  }, [isLoading]);
 
   useEffect(() => {
     const updatePill = () => {
@@ -264,6 +284,7 @@ const FloatingNav = () => {
 
 const App = () => {
   const { scrollYProgress } = useScroll();
+  const [isLoading, setIsLoading] = useState(true);
   const scaleX = useSpring(scrollYProgress, {
     stiffness: 100,
     damping: 30,
@@ -271,9 +292,17 @@ const App = () => {
   });
   const isMobile = useIsMobile();
 
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 500);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <div className="font-['Space_Mono'] transition-colors duration-300 text-[#222337] overflow-x-hidden">
       <div className="fixed inset-0 z-[-2] bg-[#ffffe5]" />
+      
+      {/* Bottom Safe Area Mask */}
+      <div className="fixed bottom-0 left-0 right-0 h-[env(safe-area-inset-bottom)] bg-[#ffffe5] z-[60]" />
       
       {/* Noise Overlay */}
       {!isMobile && (
@@ -354,14 +383,42 @@ const App = () => {
         `}
       </style>
       <Header scaleX={scaleX} />
-      <FloatingNav />
+      <FloatingNav isLoading={isLoading} />
       <main className="pt-[calc(6rem+env(safe-area-inset-top))] relative z-10">
-        <Hero />
-        <About />
-        <Education />
-        <Projects />
-        <Experience />
-        <Skills />
+        {isLoading ? (
+          <div className="container mx-auto px-6 py-32 flex flex-col gap-32">
+            <div className="flex flex-col md:flex-row items-center justify-center gap-12">
+              <Skeleton className="w-72 h-72 rounded-full shrink-0" />
+              <SkeletonCard className="w-full max-w-lg h-64" />
+            </div>
+            <div className="w-full">
+              <Skeleton className="h-10 w-48 mx-auto mb-8" />
+              <div className="max-w-3xl mx-auto">
+                <SkeletonCard className="h-48" />
+              </div>
+            </div>
+            <div className="w-full">
+              <Skeleton className="h-10 w-48 mx-auto mb-8" />
+              <div className="flex flex-col md:flex-row items-center gap-8 w-full max-w-5xl mx-auto">
+                <Skeleton className="hidden md:block w-48 h-48 rounded-full shrink-0" />
+                <SkeletonCard className="w-full flex-1 h-64" />
+              </div>
+            </div>
+          </div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Hero />
+            <About />
+            <Education />
+            <Projects />
+            <Experience />
+            <Skills />
+          </motion.div>
+        )}
       </main>
       <Footer className="relative z-10" />
     </div>
@@ -394,7 +451,7 @@ const Header = ({ scaleX }) => {
   ];
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 ${isMobile ? '' : 'backdrop-blur-md'} border-b-2 shadow-[0_4px_0_0_rgba(34,35,55,0.05)] transition-colors duration-300 bg-[#ffffe5]/90 border-[#222337]/10 overflow-hidden pt-[env(safe-area-inset-top)]`}>
+    <header className={`fixed top-0 left-0 right-0 z-50 ${isMobile ? '' : 'backdrop-blur-md'} border-b-2 shadow-[0_4px_0_0_rgba(34,35,55,0.05)] transition-colors duration-300 bg-[#ffffe5] border-[#222337]/10 overflow-hidden pt-[env(safe-area-inset-top)]`}>
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
         <svg width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
           {stripes.map((stripe, index) => (
