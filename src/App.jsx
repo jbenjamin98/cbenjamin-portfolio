@@ -216,12 +216,19 @@ const FloatingNav = ({ isLoading }) => {
       handleScroll();
     };
 
+    const resizeObserver = new ResizeObserver(() => {
+      cacheElements();
+      handleScroll();
+    });
+    resizeObserver.observe(document.body);
+
     window.addEventListener('scroll', handleScroll);
     window.addEventListener('resize', handleResize);
     handleScroll();
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
+      resizeObserver.disconnect();
     };
   }, [isLoading]);
 
@@ -250,7 +257,7 @@ const FloatingNav = ({ isLoading }) => {
   const activeItem = NAV_ITEMS.find(item => item.id === activeSection);
 
   return (
-    <div ref={containerRef} className="fixed inset-x-0 z-40 flex justify-center pointer-events-none" style={{ bottom: 'calc(32px + env(safe-area-inset-bottom))' }}>
+    <div ref={containerRef} className="fixed inset-x-0 z-[80] flex justify-center pointer-events-none" style={{ bottom: 'calc(32px + env(safe-area-inset-bottom))' }}>
       <nav ref={navRef} className={`pointer-events-auto relative flex items-center gap-1 p-2 rounded-full border-2 border-[#222337] bg-[#ffffe5]/90 ${isMobile ? '' : 'backdrop-blur-md'} shadow-[4px_4px_0px_0px_#222337] overflow-x-auto max-w-[90vw]`}>
         <motion.div
           className="absolute rounded-full"
@@ -302,7 +309,7 @@ const App = () => {
       <div className="fixed inset-0 z-[-2] bg-[#ffffe5]" />
       
       {/* Bottom Safe Area Mask */}
-      <div className="fixed bottom-0 left-0 right-0 h-[env(safe-area-inset-bottom)] bg-[#ffffe5] z-[60]" />
+      <div className="fixed bottom-0 left-0 right-0 h-safe-bottom bg-[#ffffe5] z-[60]" />
       
       {/* Noise Overlay */}
       {!isMobile && (
@@ -451,7 +458,7 @@ const Header = ({ scaleX }) => {
   ];
 
   return (
-    <header className={`fixed top-0 left-0 right-0 z-50 ${isMobile ? '' : 'backdrop-blur-md'} border-b-2 shadow-[0_4px_0_0_rgba(34,35,55,0.05)] transition-colors duration-300 bg-[#ffffe5] border-[#222337]/10 overflow-hidden pt-[env(safe-area-inset-top)]`}>
+    <header className={`fixed top-0 left-0 right-0 z-50 ${isMobile ? '' : 'backdrop-blur-md'} border-b-2 shadow-[0_4px_0_0_rgba(34,35,55,0.05)] transition-colors duration-300 bg-[#ffffe5] border-[#222337]/10 overflow-hidden pt-safe-top`}>
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
         <svg width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
           {stripes.map((stripe, index) => (
@@ -609,16 +616,12 @@ const Education = () => {
               <h4 className="font-bold text-sm mb-4 font-['Orbitron'] text-left">Relevant Coursework:</h4>
               <div className="flex flex-wrap justify-start gap-3">
                 {edu.related_coursework.map((course, i) => (
-                  <motion.div
+                  <div
                     key={i}
                     className="px-3 py-1 border-2 border-[#222337] bg-[#ffffe5] text-[#222337] font-bold shadow-[4px_4px_0px_0px_#ef4b2f] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all cursor-default text-xs md:text-sm"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.3, delay: i * 0.05 }}
                   >
                     {course}
-                  </motion.div>
+                  </div>
                 ))}
               </div>
             </div>
@@ -702,16 +705,12 @@ const Skills = () => {
                 </h3>
                 <div className="flex flex-wrap gap-4">
                   {skills.map((skill, index) => (
-                    <motion.div
+                    <div
                       key={skill}
                       className="px-3 py-1 md:px-4 md:py-2 border-2 border-[#222337] bg-[#ffffe5] text-[#222337] font-bold shadow-[4px_4px_0px_0px_#ef4b2f] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all cursor-default text-xs md:text-base"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      whileInView={{ opacity: 1, scale: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.3, delay: (categoryIndex * 0.2) + (index * 0.05) }}
                     >
                       {skill}
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -725,7 +724,7 @@ const Skills = () => {
 
 const Footer = ({ className = "" }) => {
   return (
-    <footer id="contact" className={`bg-[#222337] text-[#ffffe5] mt-20 py-12 ${className}`}>
+    <footer id="contact" className={`bg-[#222337] text-[#ffffe5] mt-20 pt-12 pb-[calc(3rem+env(safe-area-inset-bottom))] z-[70] ${className}`}>
       <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center space-y-6 md:space-y-0">
         <div className="text-center md:text-left">
           <p>&copy; {new Date().getFullYear()} {resumeData.personal_information.name}. All Rights Reserved.</p>
