@@ -15,14 +15,30 @@ const STRIPES = [
   { color: "#4d80d3", d: "M-80 -200 L 112 40 L 112 10000" },
 ];
 
+const MOBILE_STRIPES = [
+  { color: "#222337", d: "M-72 -200 L 24 40 L 24 10000" },
+  { color: "#ef4b2f", d: "M-64 -200 L 32 40 L 32 10000" },
+  { color: "#ff9a14", d: "M-56 -200 L 40 40 L 40 10000" },
+  { color: "#ffffe5", d: "M-48 -200 L 48 40 L 48 10000" },
+  { color: "#4d80d3", d: "M-40 -200 L 56 40 L 56 10000" },
+];
+
+const NAV_ITEMS = [
+  { id: 'about', label: 'About', color: '#ef4b2f' },
+  { id: 'education', label: 'Edu', color: '#ff9a14' },
+  { id: 'projects', label: 'Projects', color: '#4d80d3' },
+  { id: 'experience', label: 'Exp', color: '#222337' },
+  { id: 'skills', label: 'Skills', color: '#ef4b2f' },
+];
+
 const useIsMobile = () => {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 768px)').matches);
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    const handler = (e) => setIsMobile(e.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
   }, []);
 
   return isMobile;
@@ -30,11 +46,9 @@ const useIsMobile = () => {
 
 const SpinningCoin = ({ className = "" }) => (
   <div className={`relative shrink-0 ${className}`} style={{ perspective: "1000px" }}>
-    <motion.div 
-      className="absolute inset-0 rounded-full bg-[#ff9a14]/10 border-4 border-[#ff9a14] shadow-[4px_4px_0px_0px_#ff9a14] overflow-hidden flex items-center justify-center"
+    <div 
+      className="absolute inset-0 rounded-full bg-[#ff9a14]/10 border-4 border-[#ff9a14] shadow-[4px_4px_0px_0px_#ff9a14] overflow-hidden flex items-center justify-center animate-spin-y"
       style={{ transformStyle: "preserve-3d" }}
-      animate={{ rotateY: 360 }}
-      transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
     >
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-80">
         <svg width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -44,7 +58,7 @@ const SpinningCoin = ({ className = "" }) => (
         </svg>
       </div>
       <img src={uvaLogo} alt="UVA Logo" className="relative w-[75%] h-[75%] object-contain z-10" />
-    </motion.div>
+    </div>
   </div>
 );
 
@@ -59,15 +73,7 @@ const Card = ({ children, className = "", stripeScale = 1, disableStripePadding 
 
   const desktopStripes = STRIPES;
 
-  const mobileStripes = [
-    { color: "#222337", d: "M-72 -200 L 24 40 L 24 10000" },
-    { color: "#ef4b2f", d: "M-64 -200 L 32 40 L 32 10000" },
-    { color: "#ff9a14", d: "M-56 -200 L 40 40 L 40 10000" },
-    { color: "#ffffe5", d: "M-48 -200 L 48 40 L 48 10000" },
-    { color: "#4d80d3", d: "M-40 -200 L 56 40 L 56 10000" },
-  ];
-
-  const stripes = isMobile ? mobileStripes : desktopStripes;
+  const stripes = isMobile ? MOBILE_STRIPES : desktopStripes;
   const strokeWidth = isMobile ? "8" : "16";
 
   return (
@@ -106,71 +112,112 @@ const Card = ({ children, className = "", stripeScale = 1, disableStripePadding 
 const FloatingNav = () => {
   const [activeSection, setActiveSection] = useState('hero');
   const [bottomOffset, setBottomOffset] = useState(32);
+  const navRef = useRef(null);
+  const [pillStyle, setPillStyle] = useState({ left: 0, width: 0, top: 0, height: 0, opacity: 0 });
 
   useEffect(() => {
-    const handleScroll = () => {
+    let ticking = false;
+    let sectionElements = [];
+    let footer = null;
+
+    const cacheElements = () => {
       const sections = ['hero', 'about', 'education', 'projects', 'experience', 'skills'];
-      const scrollPosition = window.scrollY + 300;
+      sectionElements = sections.map(id => ({ id, el: document.getElementById(id) })).filter(item => item.el);
+      footer = document.getElementById('contact');
+    };
 
-      for (const section of sections) {
-        const element = document.getElementById(section);
-        if (element) {
-          const offsetTop = element.offsetTop;
-          const offsetBottom = offsetTop + element.offsetHeight;
-          if (scrollPosition >= offsetTop && scrollPosition < offsetBottom) {
-            setActiveSection(section);
+    cacheElements();
+
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const scrollPosition = window.scrollY + 300;
+
+          for (const { id, el } of sectionElements) {
+            const offsetTop = el.offsetTop;
+            const offsetBottom = offsetTop + el.offsetHeight;
+            if (scrollPosition >= offsetTop && scrollPosition < offsetBottom) {
+              setActiveSection(id);
+            }
           }
-        }
-      }
 
-      const footer = document.getElementById('contact');
-      if (footer) {
-        const footerRect = footer.getBoundingClientRect();
-        const windowHeight = window.innerHeight;
-        if (footerRect.top < windowHeight) {
-          setBottomOffset(32 + (windowHeight - footerRect.top));
-        } else {
-          setBottomOffset(32);
-        }
+          if (footer) {
+            const footerRect = footer.getBoundingClientRect();
+            const windowHeight = window.innerHeight;
+            if (footerRect.top < windowHeight) {
+              setBottomOffset(32 + (windowHeight - footerRect.top));
+            } else {
+              setBottomOffset(32);
+            }
+          }
+          ticking = false;
+        });
+        ticking = true;
       }
+    };
+
+    const handleResize = () => {
+      cacheElements();
+      handleScroll();
     };
 
     window.addEventListener('scroll', handleScroll);
-    window.addEventListener('resize', handleScroll);
+    window.addEventListener('resize', handleResize);
     handleScroll();
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', handleScroll);
+      window.removeEventListener('resize', handleResize);
     };
   }, []);
 
-  const navItems = [
-    { id: 'about', label: 'About', color: '#ef4b2f' },
-    { id: 'education', label: 'Education', color: '#ff9a14' },
-    { id: 'projects', label: 'Projects', color: '#4d80d3' },
-    { id: 'experience', label: 'Exp', color: '#222337' },
-    { id: 'skills', label: 'Skills', color: '#ef4b2f' },
-  ];
+  useEffect(() => {
+    const updatePill = () => {
+      if (!navRef.current) return;
+      const activeLink = navRef.current.querySelector(`a[href="#${activeSection}"]`);
+      if (activeLink) {
+        setPillStyle({
+          left: activeLink.offsetLeft,
+          width: activeLink.offsetWidth,
+          top: activeLink.offsetTop,
+          height: activeLink.offsetHeight,
+          opacity: 1
+        });
+      } else {
+        setPillStyle(prev => ({ ...prev, opacity: 0 }));
+      }
+    };
+
+    updatePill();
+    window.addEventListener('resize', updatePill);
+    return () => window.removeEventListener('resize', updatePill);
+  }, [activeSection]);
+
+  const activeItem = NAV_ITEMS.find(item => item.id === activeSection);
 
   return (
-    <div className="fixed left-1/2 -translate-x-1/2 z-40 w-max max-w-[90vw]" style={{ bottom: `${bottomOffset}px` }}>
-      <nav className="flex items-center gap-1 p-2 rounded-full border-2 border-[#222337] bg-[#ffffe5]/90 backdrop-blur-md shadow-[4px_4px_0px_0px_#222337] overflow-x-auto">
-        {navItems.map((item) => {
+    <div className="fixed inset-x-0 z-40 flex justify-center pointer-events-none" style={{ bottom: `${bottomOffset}px` }}>
+      <nav ref={navRef} className="pointer-events-auto relative flex items-center gap-1 p-2 rounded-full border-2 border-[#222337] bg-[#ffffe5]/90 backdrop-blur-md shadow-[4px_4px_0px_0px_#222337] overflow-x-auto max-w-[90vw]">
+        <motion.div
+          className="absolute rounded-full"
+          initial={false}
+          animate={{
+            left: pillStyle.left,
+            width: pillStyle.width,
+            top: pillStyle.top,
+            height: pillStyle.height,
+            backgroundColor: activeItem ? activeItem.color : 'transparent',
+            opacity: pillStyle.opacity
+          }}
+          transition={{ type: "spring", stiffness: 500, damping: 35 }}
+        />
+        {NAV_ITEMS.map((item) => {
           const isActive = activeSection === item.id;
           return (
             <a
               key={item.id}
               href={`#${item.id}`}
-              className={`relative px-3 py-1.5 rounded-full text-sm font-['Space_Mono'] font-bold transition-colors duration-300 whitespace-nowrap z-10 ${isActive ? 'text-[#ffffe5]' : 'text-[#222337]'}`}
+              className={`relative px-2 py-1 md:px-3 md:py-1.5 rounded-full text-xs md:text-sm font-['Space_Mono'] font-bold transition-colors duration-300 whitespace-nowrap z-10 ${isActive ? 'text-[#ffffe5]' : 'text-[#222337]'}`}
             >
-              {isActive && (
-                <motion.span
-                  layoutId="activeNavPill"
-                  className="absolute inset-0 rounded-full -z-10"
-                  style={{ backgroundColor: item.color }}
-                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                />
-              )}
               {item.label}
             </a>
           );
@@ -202,12 +249,6 @@ const App = () => {
         </svg>
       </div>
 
-      {/* Scroll Progress Bar */}
-      <motion.div
-        className="fixed top-0 left-0 right-0 h-1.5 bg-[#ef4b2f] origin-left z-[60]"
-        style={{ scaleX }}
-      />
-
       <style>
         {`
           @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
@@ -218,49 +259,6 @@ const App = () => {
 
           .text-shadow-section {
             text-shadow: 2px 2px 0px #ff9a14;
-          }
-
-          /* Glitch Effect */
-          .glitch {
-            position: relative;
-          }
-          .glitch::before,
-          .glitch::after {
-            content: attr(data-text);
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0.8;
-          }
-          .glitch::before {
-            left: 2px;
-            text-shadow: -2px 0 #ef4b2f;
-            clip-path: polygon(0 0, 100% 0, 100% 35%, 0 35%);
-            animation: glitch-anim-1 2.5s infinite linear alternate-reverse;
-          }
-          .glitch::after {
-            left: -2px;
-            text-shadow: -2px 0 #4d80d3;
-            clip-path: polygon(0 65%, 100% 65%, 100% 100%, 0 100%);
-            animation: glitch-anim-2 3s infinite linear alternate-reverse;
-          }
-          @keyframes glitch-anim-1 {
-            0% { clip-path: inset(20% 0 80% 0); }
-            20% { clip-path: inset(60% 0 10% 0); }
-            40% { clip-path: inset(40% 0 50% 0); }
-            60% { clip-path: inset(80% 0 5% 0); }
-            80% { clip-path: inset(10% 0 40% 0); }
-            100% { clip-path: inset(30% 0 20% 0); }
-          }
-          @keyframes glitch-anim-2 {
-            0% { clip-path: inset(10% 0 60% 0); }
-            20% { clip-path: inset(30% 0 10% 0); }
-            40% { clip-path: inset(70% 0 20% 0); }
-            60% { clip-path: inset(20% 0 50% 0); }
-            80% { clip-path: inset(50% 0 30% 0); }
-            100% { clip-path: inset(0% 0 80% 0); }
           }
 
           @media (max-width: 768px) {
@@ -299,6 +297,14 @@ const App = () => {
             main {
               padding-top: 0 !important;
             }
+          }
+
+          @keyframes spin-y {
+            from { transform: rotateY(0deg); }
+            to { transform: rotateY(360deg); }
+          }
+          .animate-spin-y {
+            animation: spin-y 5s linear infinite;
           }
         `}
       </style>
@@ -393,12 +399,19 @@ const Hero = () => {
               ))}
             </svg>
           </div>
-          <motion.img style={{ y: headshotY }} src={headshot} alt="Christian Benjamin" className="relative w-[100%] h-[100%] max-w-none object-cover z-10" />
+          <motion.img 
+            style={{ y: headshotY }} 
+            src={headshot} 
+            alt="Christian Benjamin" 
+            className="relative w-[100%] h-[100%] max-w-none object-cover z-10" 
+            loading="eager"
+            fetchPriority="high"
+          />
         </motion.div>
       </motion.div>
       <motion.div style={{ y }} className="w-full md:w-auto max-w-lg">
         <Card>
-          <h1 className="text-4xl font-['Orbitron'] font-bold text-[#222337] text-shadow-hero glitch" data-text={resumeData.personal_information.name}>{resumeData.personal_information.name}</h1>
+          <h1 className="text-4xl font-['Orbitron'] font-bold text-[#222337] text-shadow-hero">{resumeData.personal_information.name}</h1>
           <h2 className="text-xl font-['Space_Mono'] text-[#ef4b2f] mt-2">{resumeData.personal_information.title}</h2>
 
           <div className="mt-6 space-y-3 font-['Space_Mono'] text-sm md:text-base">
@@ -534,7 +547,7 @@ const Projects = () => {
               ))}
             </ul>
             <div className="mt-4 flex flex-wrap gap-2">
-              {project.technologies.split(', ').map(tag => <span key={tag} className="px-4 py-2 border-2 border-[#222337] bg-[#ffffe5] text-[#222337] font-bold shadow-[4px_4px_0px_0px_#ef4b2f] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all cursor-default text-sm md:text-base">{tag}</span>)}
+              {project.technologies.split(', ').map(tag => <span key={tag} className="px-3 py-1 md:px-4 md:py-2 border-2 border-[#222337] bg-[#ffffe5] text-[#222337] font-bold shadow-[4px_4px_0px_0px_#ef4b2f] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all cursor-default text-xs md:text-base">{tag}</span>)}
             </div>
           </Card>
         ))}
@@ -588,7 +601,7 @@ const Skills = () => {
                   {skills.map((skill, index) => (
                     <motion.div
                       key={skill}
-                      className="px-4 py-2 border-2 border-[#222337] bg-[#ffffe5] text-[#222337] font-bold shadow-[4px_4px_0px_0px_#ef4b2f] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all cursor-default text-sm md:text-base"
+                      className="px-3 py-1 md:px-4 md:py-2 border-2 border-[#222337] bg-[#ffffe5] text-[#222337] font-bold shadow-[4px_4px_0px_0px_#ef4b2f] hover:shadow-none hover:translate-x-[4px] hover:translate-y-[4px] transition-all cursor-default text-xs md:text-base"
                       initial={{ opacity: 0, scale: 0.8 }}
                       whileInView={{ opacity: 1, scale: 1 }}
                       viewport={{ once: true }}
