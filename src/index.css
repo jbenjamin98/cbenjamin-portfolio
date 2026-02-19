@@ -75,7 +75,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-[#ffffe5] text-foreground;
   }
 }
 
@@ -95,4 +95,5 @@ body::before {
 
 html {
   scroll-behavior: smooth;
+  background-color: #ffffe5;
 }
